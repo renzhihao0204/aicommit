@@ -13,15 +13,18 @@
 `aicommit` 把这件事自动化了：
 
 ```
-你 git add  →  aicommit 读 diff  →  AI 生成 message  →  你回车确认  →  自动 commit
+git add .          ← 你自己暂存改动
+aicommit           ← 这个工具的事：读 diff → AI 生成 → 你回车确认 → 自动 commit
+git push           ← 你自己推到远程
 ```
 
-零配置、不用注册、不用学新概念。500 行代码、1 个依赖，开箱即用。
+它只干中间那一步，但中间那一步是最烦的。零配置、不用注册、不用学新概念。500 行代码、1 个依赖，开箱即用。
 
 ## 看一眼实际效果
 
 ```
 $ git add .
+
 $ aicommit
 🤖 正在生成 commit message... ✓
 
@@ -31,9 +34,16 @@ feat(auth): add password reset flow with email verification
 ────────────────────────────────────────────────────────────
 ? 使用这条 message？ › ✅ 确认提交
 [main 1c0ce56] feat(auth): add password reset flow with email verification
+ 3 files changed, 87 insertions(+), 12 deletions(-)
+
+$ git push
+Enumerating objects: 9, done.
+...
+To https://github.com/you/your-repo.git
+   bc43563..1c0ce56  main -> main
 ```
 
-整个流程从 `git add` 到 commit 完成，**不到 10 秒**。
+整个过程从 `git add` 到代码上 GitHub，**不到 30 秒**，其中 aicommit 那一步只占 5 秒。
 
 ---
 
@@ -69,18 +79,21 @@ npm install -g aicommit
 # 1. 暂存你的改动
 git add .
 
-# 2. 生成 commit message
+# 2. 让 aicommit 帮你生成 commit message 并完成提交
 aicommit
+
+# 3. 推到远程（aicommit 不管这一步，你想 push 就 push）
+git push
 ```
 
-工具会：
+第 2 步会：
 
 1. 读取你 `git add` 进暂存区的 diff
 2. 发给 DeepSeek 生成符合 Conventional Commits 规范的 message
 3. 让你选：**确认提交** / **编辑后提交** / **取消**
 4. 确认后自动 `git commit`
 
-全程不到 10 秒。
+整个过程从 `git add` 到 `git push` 完成代码上仓，**不到 30 秒**。其中 aicommit 那一步只占 5 秒左右。
 
 ### 第一次使用：配置 API Key
 
