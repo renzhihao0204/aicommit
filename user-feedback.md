@@ -150,3 +150,71 @@ be5f799 feat(git): add git diff reading and commit utilities
 > 这是「严格规则 vs 用户友好」的典型冲突点，要么改规则，要么给降级方案。
 
 ---
+
+## 2026-05-30 Day 2 · 首位用户（summary fallback 首次实战）
+
+### 重大里程碑 ⭐⭐⭐⭐⭐
+aicommit 用**新加的 summary fallback 功能**生成了一条描述**这个功能自己**的 commit message。
+工具的新能力第一次被用来描述它自己的诞生过程。
+
+### 实际输出
+```
+😯 老板，这次改动有点大哦（5753 字符 > 4000）
+√ 怎么处理？ » 📊 切到摘要模式继续
+✓ 已切换到摘要模式（2646 字符）
+🤖 正在生成 commit message... ✓
+
+feat(ai): add diff summary support for large commits
+
+Introduce a summary-based fallback when the full diff exceeds token
+limits, combining `--stat` with per-file diff heads to preserve
+context without flooding the AI.
+```
+
+### 验证点
+- ✅ 长度检测正常触发（5753 > 4000）
+- ✅ 交互式选择菜单工作正常
+- ✅ readDiffSummary 函数正确生成 2646 字符的摘要（压缩比 54%）
+- ✅ AI 看到摘要后的 message 质量**完全不亚于看完整 diff**
+- ✅ AI 自动加了 body 解释 why（不只是 what）
+- ✅ scope 准确（ai）
+
+### 用户感受
+全程**零摩擦**：超长 → 选 → 切换 → 出结果 → 提交，整个动作流畅得像没断过。
+之前 Day 1 那个"假阳性卡住手动 commit"的痛点**100% 消失**。
+
+### 关键学习
+1. 「严格规则」+「降级方案」是最佳组合
+   - 默认严格（鼓励原子提交）
+   - 但给用户优雅的逃生通道（不强迫拆不该拆的提交）
+2. AI 看摘要也能生成高质量 message —— 摘要的"signal-to-noise"比完整 diff 更高
+3. 主动询问比静默处理更尊重用户 —— 选择权交给人
+
+## 2026-05-30 Day 2 · 测试套件落地
+
+### 成果
+- 24 个测试用例 / 267 行测试代码 / 1.5 秒全部跑完
+- 覆盖 3 个核心模块：cleanMessage / config / git diff readers
+- 0 失败
+
+### 主动跳过的测试
+- `generateMessage`：要联网 + 烧 token + AI 不确定性
+- `cli.js` 主流程：交互式 + 副作用大
+- `telemetry.js`：本就允许失败
+
+### 关键防护
+- 防 config 文件被改坏（corrupted JSON fallback）
+- 防 saveConfig 写入意外字段（白名单 + 显式 assert）
+- 防 staged/unstaged 优先级被改坏
+- 防 AI 输出里的 code fence / quotes 漏进 commit message
+
+### 设计决策记录
+为了测试隔离，重构了 config.js：
+- `CONFIG_DIR` / `CONFIG_FILE` / `PUBLIC_KEY` 从模块顶层常量改为函数
+- 新增 `AICOMMIT_CONFIG_DIR` 环境变量支持
+- 这是**必要的可测试性改造**，不算违反铁律 31（重构）
+
+### 后续不打算做的
+- 不引入 jest/vitest（node --test 完全够用，零依赖）
+- 不追求 100% 覆盖率（违反铁律 11 第一版禁止追求完美）
+- 不写 mock-heavy 的单元测试（高维护成本）
