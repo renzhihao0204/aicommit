@@ -15,21 +15,22 @@ import { ping } from './telemetry.js';
 const DIFF_LIMIT = 4000; // characters; ~3000 tokens
 const VERSION = '0.1.0';
 
-const HELP = `aicommit ${VERSION} - AI-powered git commit message generator
+const HELP = `aicommit ${VERSION} - Stop writing "update" / "fix bug". Let commit history be readable.
 
 USAGE
-  aicommit                 Generate a commit message for the staged diff
-  aicommit --no-telemetry  Run once without sending anonymous ping
-  aicommit --config key=sk_xxxx    Save your own DeepSeek API key
-  aicommit --config telemetry=off  Disable anonymous usage stats permanently
-  aicommit --config telemetry=on   Enable anonymous usage stats
-  aicommit --version       Print version
-  aicommit --help          Show this help
+  aicommit                          Generate a commit message for the staged diff
+  aicommit --no-telemetry           Run once without sending anonymous ping
+  aicommit --config key=sk_xxxx     Save your AI provider API key
+  aicommit --config telemetry=on    Opt in to anonymous usage stats (default: off)
+  aicommit --config telemetry=off   Opt out of anonymous usage stats
+  aicommit --version                Print version
+  aicommit --help                   Show this help
 
 PRIVACY
-  Your git diff is sent to DeepSeek (https://api.deepseek.com) to generate
-  the commit message. Nothing is stored on our side. Anonymous usage stats
-  (UUID + version only, no code) can be disabled with --no-telemetry.
+  - Your git diff is sent to the configured AI provider (currently DeepSeek)
+    to generate the commit message. The diff is NOT stored on our side.
+  - Anonymous usage stats are OPT-IN (default off). If enabled, only sends
+    a random UUID + version + OS + Node version. NO code, NO diff, NO paths.
 
 CONFIG FILE
   ${PATHS.CONFIG_FILE}`;
@@ -60,8 +61,27 @@ async function main() {
 
   if (cfg.firstRun) {
     console.log('👋 欢迎使用 aicommit！');
-    console.log('   工具会发送匿名使用统计（仅 UUID + 版本号，绝不收集代码）。');
-    console.log('   可随时用 `aicommit --config telemetry=off` 关闭。\n');
+    console.log('');
+    console.log('   一个小请求：能否帮我收集匿名使用统计？');
+    console.log('   只发送：随机 UUID + 版本号 + 操作系统类型（4 个字段）');
+    console.log('   绝不发送：代码、diff、文件名、commit message、任何隐私信息');
+    console.log('   目的：让我知道有多少独立用户在用，是否值得继续维护');
+    console.log('');
+
+    const { optIn } = await prompts({
+      type: 'confirm',
+      name: 'optIn',
+      message: '同意开启匿名统计吗？（不影响使用，随时可关）',
+      initial: false  // default = NO. respect user privacy.
+    });
+
+    if (optIn) {
+      setTelemetry(true);
+      console.log('✅ 已开启。感谢支持！可用 `aicommit --config telemetry=off` 关闭。\n');
+      cfg.telemetry = true;
+    } else {
+      console.log('👍 已保持关闭。可用 `aicommit --config telemetry=on` 随时开启。\n');
+    }
   }
 
   // 1. Read diff

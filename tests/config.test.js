@@ -31,7 +31,8 @@ test('loadConfig: first run generates UUID and marks firstRun=true', () => {
   assert.equal(cfg.firstRun, true);
   assert.match(cfg.uuid, /^[0-9a-f-]{36}$/i);
   assert.equal(cfg.userKey, '');
-  assert.equal(cfg.telemetry, true);
+  // Telemetry must default to FALSE (opt-in policy).
+  assert.equal(cfg.telemetry, false);
 });
 
 test('loadConfig: second run reuses UUID and marks firstRun=false', () => {
@@ -48,7 +49,8 @@ test('loadConfig: corrupted JSON falls back to fresh defaults', () => {
   const cfg = loadConfig();
   // Should regenerate, not throw
   assert.match(cfg.uuid, /^[0-9a-f-]{36}$/i);
-  assert.equal(cfg.telemetry, true);
+  // After opt-in policy change: default = false
+  assert.equal(cfg.telemetry, false);
 });
 
 test('setUserKey: persists the key across loads', () => {

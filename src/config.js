@@ -39,7 +39,8 @@ export function loadConfig() {
   }
 
   if (!cfg.uuid) cfg.uuid = randomUUID();
-  if (typeof cfg.telemetry !== 'boolean') cfg.telemetry = true;
+  // Telemetry is OPT-IN. Default = false. Users must explicitly enable.
+  if (typeof cfg.telemetry !== 'boolean') cfg.telemetry = false;
   if (!cfg.userKey) cfg.userKey = '';
 
   saveConfig(cfg);
@@ -51,7 +52,7 @@ export function saveConfig(cfg) {
   const safe = {
     uuid: cfg.uuid,
     userKey: cfg.userKey || '',
-    telemetry: cfg.telemetry !== false
+    telemetry: cfg.telemetry === true  // explicit boolean true, otherwise false
   };
   writeFileSync(getConfigFile(), JSON.stringify(safe, null, 2), { mode: 0o600 });
 }
