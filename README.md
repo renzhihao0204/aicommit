@@ -1,7 +1,24 @@
 # aicommit
 
-> Pipe your `git diff`, get a Conventional Commits message. Powered by DeepSeek.
-> No accounts. No config files to maintain. One command, ten seconds.
+> 🤖 **让 AI 帮你写 git commit message。一条命令，10 秒搞定。**
+
+你是不是也被这些事烦过：
+
+- commit 时纠结用 `feat` 还是 `chore`、`refactor` 还是 `style`
+- scope 每次都得想半天，最后干脆不写
+- 一次改了好几个文件，憋不出一句简洁准确的总结
+- 团队规定用 [Conventional Commits](https://www.conventionalcommits.org/) 规范，但 90% 的提交还是不规范
+- 最后随手敲个 "update"、"fix bug"、"修改一下"，三个月后看历史一脸懵
+
+`aicommit` 把这件事自动化了：
+
+```
+你 git add  →  aicommit 读 diff  →  AI 生成 message  →  你回车确认  →  自动 commit
+```
+
+零配置、不用注册、不用学新概念。500 行代码、1 个依赖，开箱即用。
+
+## 看一眼实际效果
 
 ```
 $ git add .
@@ -13,22 +30,24 @@ $ aicommit
 feat(auth): add password reset flow with email verification
 ────────────────────────────────────────────────────────────
 ? 使用这条 message？ › ✅ 确认提交
+[main 1c0ce56] feat(auth): add password reset flow with email verification
 ```
+
+整个流程从 `git add` 到 commit 完成，**不到 10 秒**。
 
 ---
 
-## 为什么做这个
+## 作者笔记：为什么做这个
 
-我自己每天写 commit message 都要纠结：
+试过几种方案，都不太顺手：
 
-- 是 `feat` 还是 `chore`？
-- scope 应该写什么？
-- 要不要写正文？
-- 改了一堆东西，怎么用一句话总结？
+- **GUI 工具**（gitkraken / sourcetree）：要切到另一个窗口、点来点去，比手敲还慢
+- **husky + commitlint 模板**：能强制格式，但写不出"内容"，纠结的还是纠结
+- **手动遵守 Conventional Commits**：第一周很有干劲，第二周开始偷懒
 
-试过 GUI 工具、试过 husky 模板，都嫌麻烦。最后发现最快的方式就是：**让 AI 看一眼 diff，直接吐一条 message，我确认就 commit**。
+最后发现最快的方式就是：**让 AI 看一眼 diff，直接给条 message，我审查通过就提交**。审查本来就要做（反正都要看一眼自己改了啥再 commit），AI 把"写"的部分干掉了，剩下"看"的部分就是举手之劳。
 
-`aicommit` 就是这个工具。500 行代码，1 个依赖，零配置开箱用。
+`aicommit` 就是把这个流程做到极致：**只做这一件事**，把它做到 10 秒以内、零摩擦。
 
 ---
 
