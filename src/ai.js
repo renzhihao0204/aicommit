@@ -79,8 +79,9 @@ export async function generateMessage(payload, apiKey, opts = {}) {
 
 /**
  * Strip code fences, surrounding quotes and trailing whitespace.
+ * Exported for testing.
  */
-function cleanMessage(text) {
+export function cleanMessage(text) {
   let s = text.trim();
   // Remove code fences if model wrapped them
   s = s.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();

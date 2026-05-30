@@ -4,12 +4,19 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const CONFIG_DIR = join(homedir(), '.aicommit');
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+// Resolved lazily so tests can override AICOMMIT_CONFIG_DIR per-test.
+function getConfigDir() {
+  return process.env.AICOMMIT_CONFIG_DIR || join(homedir(), '.aicommit');
+}
+function getConfigFile() {
+  return join(getConfigDir(), 'config.json');
+}
 
 // Public key shipped with the package. Set at publish time via env var.
 // Leave empty during development; users must configure their own key.
-const PUBLIC_KEY = process.env.AICOMMIT_PUBLIC_KEY || '';
+function getPublicKey() {
+  return process.env.AICOMMIT_PUBLIC_KEY || '';
+}
 
 /**
  * Load config, creating defaults on first run.
@@ -20,9 +27,10 @@ export function loadConfig() {
   let cfg = {};
   let firstRun = false;
 
-  if (existsSync(CONFIG_FILE)) {
+  const file = getConfigFile();
+  if (existsSync(file)) {
     try {
-      cfg = JSON.parse(readFileSync(CONFIG_FILE, 'utf8'));
+      cfg = JSON.parse(readFileSync(file, 'utf8'));
     } catch {
       cfg = {};
     }
@@ -45,7 +53,7 @@ export function saveConfig(cfg) {
     userKey: cfg.userKey || '',
     telemetry: cfg.telemetry !== false
   };
-  writeFileSync(CONFIG_FILE, JSON.stringify(safe, null, 2), { mode: 0o600 });
+  writeFileSync(getConfigFile(), JSON.stringify(safe, null, 2), { mode: 0o600 });
 }
 
 export function setUserKey(key) {
@@ -71,14 +79,20 @@ export function resolveApiKey() {
   }
   const cfg = loadConfig();
   if (cfg.userKey) return { key: cfg.userKey, source: 'user' };
-  if (PUBLIC_KEY) return { key: PUBLIC_KEY, source: 'public' };
+  const pub = getPublicKey();
+  if (pub) return { key: pub, source: 'public' };
   return { key: '', source: 'none' };
 }
 
 function ensureDir() {
-  if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  const dir = getConfigDir();
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
   }
 }
 
-export const PATHS = { CONFIG_DIR, CONFIG_FILE };
+// Exported as getters so they always reflect the current env-resolved paths.
+export const PATHS = {
+  get CONFIG_DIR() { return getConfigDir(); },
+  get CONFIG_FILE() { return getConfigFile(); }
+};
