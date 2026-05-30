@@ -7,3 +7,6 @@ node_modules/
 .idea/
 dist/
 coverage/
+
+# Private strategy docs (not for public)
+一人公司流水线系统-*.md
