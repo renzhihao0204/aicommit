@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // cli.js - Entry point. Parses args, drives the main flow.
 import prompts from 'prompts';
-import { readDiff, commit } from './git.js';
+import { readDiff, readDiffSummary, commit } from './git.js';
 import { generateMessage } from './ai.js';
 import {
   loadConfig,
@@ -82,13 +82,50 @@ async function main() {
     console.log('⚠️  没有暂存的改动，使用工作区 diff 生成（不会自动 commit）。');
   }
 
-  // 2. Length check (compute on bytes to be conservative for multi-byte chars)
+  // 2. Length check. If too large, offer a summary-mode fallback instead
+  //    of hard-failing — many real-world commits are legitimately large
+  //    (single big file, mass refactor, generated code) and can't be split.
+  let payload = diff;
+  let usedSummary = false;
   if (diff.length > DIFF_LIMIT) {
     console.log(`\n😯 老板，这次改动有点大哦（${diff.length} 字符 > ${DIFF_LIMIT}）`);
-    console.log('   AI 脑容量不够啦，建议：');
-    console.log('   - 先 `git add` 部分文件分批提交');
-    console.log('   - 或拆成多个原子提交，每次只 commit 相关的改动');
-    return 2;
+
+    const { choice } = await prompts({
+      type: 'select',
+      name: 'choice',
+      message: '怎么处理？',
+      choices: [
+        {
+          title: '📊 切到摘要模式继续（用 git diff --stat + 每个文件前 20 行）',
+          value: 'summary'
+        },
+        {
+          title: '✂️  取消，我自己拆 commit',
+          value: 'cancel'
+        }
+      ],
+      initial: 0
+    });
+
+    if (choice !== 'summary') {
+      console.log('已取消。建议：分批 `git add` 部分文件，或拆成多个原子提交。');
+      return 2;
+    }
+
+    try {
+      payload = readDiffSummary(source);
+      usedSummary = true;
+      console.log(`✓ 已切换到摘要模式（${payload.length} 字符）`);
+    } catch (err) {
+      console.error('❌ 生成摘要失败：', err.message);
+      return 1;
+    }
+
+    // Even summary should fit; if not, bail out.
+    if (payload.length > DIFF_LIMIT * 2) {
+      console.error(`❌ 摘要仍然过大（${payload.length} 字符），请拆分提交。`);
+      return 2;
+    }
   }
 
   // 3. Resolve API key
@@ -104,7 +141,7 @@ async function main() {
   process.stdout.write('🤖 正在生成 commit message...');
   let message;
   try {
-    message = await generateMessage(diff, key);
+    message = await generateMessage(payload, key, { isSummary: usedSummary });
     process.stdout.write(' ✓\n');
   } catch (err) {
     process.stdout.write(' ✗\n');

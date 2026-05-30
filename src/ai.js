@@ -13,21 +13,27 @@ const SYSTEM_PROMPT = `你是一个严格遵守 Conventional Commits 规范的 g
 6. 优先使用英文，除非用户的代码注释/字符串明显是中文项目`;
 
 /**
- * Generate a commit message from a diff using DeepSeek API.
- * @param {string} diff
+ * Generate a commit message from a diff (or diff summary) using DeepSeek.
+ * @param {string} payload - raw git diff, or a summary produced by readDiffSummary
  * @param {string} apiKey
+ * @param {{ isSummary?: boolean }} [opts]
  * @returns {Promise<string>}
  */
-export async function generateMessage(diff, apiKey) {
+export async function generateMessage(payload, apiKey, opts = {}) {
   if (!apiKey) {
     throw new Error('NO_API_KEY');
   }
+
+  const userPrompt = opts.isSummary
+    ? `下面不是完整 diff，而是一份摘要（git diff --stat + 每个文件前 20 行）。\n` +
+      `请基于摘要推断主题，生成 commit message：\n\n${payload}`
+    : `请根据以下 git diff 生成 commit message：\n\n${payload}`;
 
   const body = {
     model: MODEL,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `请根据以下 git diff 生成 commit message：\n\n${diff}` }
+      { role: 'user', content: userPrompt }
     ],
     temperature: 0.3,
     max_tokens: 200
