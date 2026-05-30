@@ -1,0 +1,42 @@
+{
+  "name": "aicommit",
+  "version": "0.1.0",
+  "description": "AI-powered git commit message generator. Pipe git diff, get a Conventional Commits message.",
+  "type": "module",
+  "bin": {
+    "aicommit": "./src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node --test tests"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "deepseek",
+    "conventional-commits",
+    "cli"
+  ],
+  "author": "renzhihao0204-raze <15998305618@163.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renzhihao0204-raze/aicommit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/renzhihao0204-raze/aicommit/issues"
+  },
+  "homepage": "https://github.com/renzhihao0204-raze/aicommit#readme",
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
+}
