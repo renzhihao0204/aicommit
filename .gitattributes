@@ -1,0 +1,18 @@
+# Auto-detect text files and normalize line endings to LF in the repo.
+# Working copy keeps OS-native line endings.
+* text=auto eol=lf
+
+# Explicit text files - always LF in working copy too (cross-platform safe).
+*.js     text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.sh     text eol=lf
+
+# Binary files - never touch.
+*.png    binary
+*.jpg    binary
+*.gif    binary
+*.ico    binary
+*.zip    binary
